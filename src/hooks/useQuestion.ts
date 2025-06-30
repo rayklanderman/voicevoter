@@ -25,6 +25,7 @@ export function useQuestion() {
         const { data, error } = await supabase
           .from('questions')
           .select('*')
+          .eq('moderation_status', 'approved')
           .order('created_at', { ascending: false })
           .limit(1);
 
@@ -62,9 +63,14 @@ export function useQuestion() {
 
     // Set up real-time subscription for new questions
     const subscription = supabase
-      .channel('questions')
+      .channel('questions_channel')
       .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'questions' },
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'questions',
+          filter: 'moderation_status=eq.approved'
+        },
         (payload) => {
           console.log('New question added:', payload);
           fetchQuestion(); // Refresh when new questions are added

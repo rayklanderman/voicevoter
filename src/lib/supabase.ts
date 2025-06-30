@@ -18,13 +18,19 @@ const createMockClient = () => ({
     insert: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
     update: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
     delete: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
-    upsert: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') })
+    upsert: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+    eq: function() { return this; },
+    order: function() { return this; },
+    limit: function() { return this; },
+    maybeSingle: function() { return this; },
+    single: function() { return this; }
   }),
   auth: {
     signUp: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
     signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
     signOut: () => Promise.resolve({ error: null }),
     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
   },
   channel: () => ({
@@ -186,14 +192,14 @@ export async function checkDatabaseHealth(): Promise<{
       
       if (error) {
         result.tables[table] = false;
-        result.errors.push(`${table}: Connection failed`);
+        result.errors.push(`${table}: Connection failed - ${error.message}`);
         result.isHealthy = false;
       } else {
         result.tables[table] = true;
       }
     } catch (err) {
       result.tables[table] = false;
-      result.errors.push(`${table}: System error`);
+      result.errors.push(`${table}: System error - ${err instanceof Error ? err.message : 'Unknown error'}`);
       result.isHealthy = false;
     }
   }

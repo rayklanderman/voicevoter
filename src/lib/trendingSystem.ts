@@ -111,7 +111,7 @@ Generate compelling questions that people worldwide would want to vote on!`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+        model: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3000,
         temperature: 0.7,
@@ -246,7 +246,7 @@ function moderateContent(text: string): boolean {
 
 // Enhanced trending topics generation with real scraping
 export async function generateTrendingTopics(): Promise<TrendingTopic[]> {
-  const sources = ['x_twitter', 'tiktok', 'reddit', 'news'];
+  const sources = ['x_twitter', 'reddit', 'news'];
   const allTopics: TrendingTopic[] = [];
   const scrapingStatus = getScrapingStatus();
 
@@ -332,7 +332,7 @@ export async function getActiveTrendingTopics(): Promise<TrendingTopic[]> {
       .eq('is_safe', true)
       .order('vote_count', { ascending: false })
       .order('trending_score', { ascending: false })
-      .limit(10);
+      .limit(20);
 
     if (error) {
       console.error('Error fetching trending topics:', error);

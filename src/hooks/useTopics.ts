@@ -18,13 +18,16 @@ export function useTopics() {
       setLoading(true);
       setError(null);
 
-      // Fetch categories
+      // Fetch categories first
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('topic_categories')
         .select('*')
         .order('name');
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        throw categoriesError;
+      }
       setCategories(categoriesData || []);
 
       // Fetch active topics
@@ -32,9 +35,13 @@ export function useTopics() {
         .from('ai_topics')
         .select('*')
         .eq('is_active', true)
-        .order('trending_score', { ascending: false });
+        .order('trending_score', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (topicsError) throw topicsError;
+      if (topicsError) {
+        console.error('Error fetching topics:', topicsError);
+        throw topicsError;
+      }
       setTopics(topicsData || []);
 
     } catch (err) {
@@ -60,36 +67,71 @@ export function useTopics() {
         newTopics = fallbackTopics;
       }
 
-      // Store topics in database
-      for (const topic of newTopics) {
-        // Find category ID
-        const category = categories.find(cat => 
-          cat.name.toLowerCase() === topic.category.toLowerCase()
-        );
+      console.log(`Generated ${newTopics.length} topics:`, newTopics);
 
-        if (category) {
-          const { error: insertError } = await supabase
+      // Store topics in database
+      const insertedTopics = [];
+      for (const topic of newTopics) {
+        try {
+          // Find or create category
+          let categoryId = null;
+          const existingCategory = categories.find(cat => 
+            cat.name.toLowerCase() === topic.category.toLowerCase()
+          );
+
+          if (existingCategory) {
+            categoryId = existingCategory.id;
+          } else {
+            // Create new category if it doesn't exist
+            const { data: newCategory, error: categoryError } = await supabase
+              .from('topic_categories')
+              .insert({
+                name: topic.category,
+                description: `Topics related to ${topic.category}`,
+                emoji: getCategoryEmoji(topic.category)
+              })
+              .select()
+              .single();
+
+            if (categoryError) {
+              console.error('Error creating category:', categoryError);
+              // Use a default category if creation fails
+              categoryId = categories[0]?.id || null;
+            } else {
+              categoryId = newCategory.id;
+              setCategories(prev => [...prev, newCategory]);
+            }
+          }
+
+          const { data: insertedTopic, error: insertError } = await supabase
             .from('ai_topics')
             .insert({
               title: topic.title,
               description: topic.description,
-              category_id: category.id,
+              category_id: categoryId,
               trending_score: topic.trending_score,
               keywords: topic.keywords,
               source: isTogetherConfigured() ? 'together_ai' : 'fallback',
               is_active: true
-            });
+            })
+            .select()
+            .single();
 
           if (insertError) {
             console.error('Error inserting topic:', insertError);
+          } else {
+            insertedTopics.push(insertedTopic);
+            console.log(`✅ Stored topic: ${insertedTopic.title.substring(0, 50)}...`);
           }
+        } catch (topicError) {
+          console.error('Error processing individual topic:', topicError);
         }
       }
 
-      // Refresh topics
+      // Refresh topics to show new ones
       await fetchTopicsAndCategories();
       
-      console.log(`✅ Generated and stored ${newTopics.length} new topics`);
+      console.log(`✅ Successfully generated and stored ${insertedTopics.length} new topics`);
 
     } catch (err) {
       console.error('Error generating topics:', err);
@@ -110,12 +152,16 @@ export function useTopics() {
           text: topic.title,
           topic_id: topicId,
           source: 'ai_generated',
-          is_trending: true
+          is_trending: true,
+          moderation_status: 'approved'
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating question:', error);
+        throw error;
+      }
 
       console.log('✅ Created question from topic:', data);
       return { data, error: null };
@@ -136,4 +182,24 @@ export function useTopics() {
     createQuestionFromTopic,
     refresh: fetchTopicsAndCategories
   };
+}
+
+// Helper function to get emoji for category
+function getCategoryEmoji(category: string): string {
+  const emojiMap: Record<string, string> = {
+    'Technology': '💻',
+    'Politics': '🏛️',
+    'Environment': '🌍',
+    'Health': '🏥',
+    'Entertainment': '🎬',
+    'Sports': '⚽',
+    'Economy': '💰',
+    'Science': '🔬',
+    'Social Issues': '👥',
+    'Lifestyle': '🌟',
+    'News': '📰',
+    'Culture': '🎨'
+  };
+  
+  return emojiMap[category] || '📊';
 }

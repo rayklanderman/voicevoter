@@ -43,6 +43,7 @@ export function useVotes(questionId: string | undefined) {
             .select('choice')
             .eq('question_id', questionId)
             .eq('user_id', user.id)
+            .eq('is_anonymous', false)
             .maybeSingle();
 
           if (userVoteError) {
@@ -81,7 +82,7 @@ export function useVotes(questionId: string | undefined) {
 
     // Set up real-time subscription for live updates
     const subscription = supabase
-      .channel(`votes-${questionId}`)
+      .channel(`votes_${questionId}`)
       .on('postgres_changes', 
         { 
           event: '*', 
@@ -95,7 +96,10 @@ export function useVotes(questionId: string | undefined) {
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Votes subscription status:', status);
+        if (status === 'SUBSCRIPTION_ERROR') {
+          console.error('Failed to subscribe to votes channel');
+        }
       });
 
     return () => {
@@ -119,6 +123,7 @@ export function useVotes(questionId: string | undefined) {
             user_id: user.id,
             choice,
             is_anonymous: false,
+            session_id: null
           });
 
         if (error) {

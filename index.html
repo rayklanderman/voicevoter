@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
@@ -9,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#3b82f6" />
+    <meta name="theme-color" content="#8b5cf6" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Voice Voter" />
@@ -83,14 +84,14 @@
         // Show install button or banner
         const installBanner = document.createElement('div');
         installBanner.innerHTML = `
-          <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; display: flex; align-items: center; justify-content: space-between; font-family: system-ui;">
+          <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; display: flex; align-items: center; justify-content: space-between; font-family: system-ui;">
             <div>
               <div style="font-weight: bold; margin-bottom: 4px;">📱 Install Voice Voter</div>
               <div style="font-size: 14px; opacity: 0.9;">Add to home screen for the best experience</div>
             </div>
             <div>
               <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 6px; margin-right: 8px; cursor: pointer;">Later</button>
-              <button id="installBtn" style="background: white; border: none; color: #3b82f6; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">Install</button>
+              <button id="installBtn" style="background: white; border: none; color: #8b5cf6; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">Install</button>
             </div>
           </div>
         `;

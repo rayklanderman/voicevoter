@@ -1,43 +1,14 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:1" />
-    </linearGradient>
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
-    </filter>
   </defs>
   
-  <!-- Background Circle -->
-  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
   
-  <!-- Microphone Body -->
-  <rect x="226" y="180" width="60" height="120" rx="30" fill="url(#iconGradient)" filter="url(#shadow)"/>
-  
-  <!-- Microphone Grille Lines -->
-  <line x1="240" y1="200" x2="272" y2="200" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="240" y1="220" x2="272" y2="220" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="240" y1="240" x2="272" y2="240" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="240" y1="260" x2="272" y2="260" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="240" y1="280" x2="272" y2="280" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
-  
-  <!-- Microphone Stand -->
-  <rect x="250" y="300" width="12" height="40" fill="url(#iconGradient)"/>
-  
-  <!-- Microphone Base -->
-  <ellipse cx="256" cy="350" rx="35" ry="8" fill="url(#iconGradient)"/>
-  
-  <!-- Vote Checkmark -->
-  <circle cx="320" cy="200" r="25" fill="#10b981" filter="url(#shadow)"/>
-  <path d="M310 200 L318 208 L330 192" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  
-  <!-- Sound Waves -->
-  <path d="M320 240 Q340 250 320 260" stroke="url(#iconGradient)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M330 230 Q360 245 330 270" stroke="url(#iconGradient)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M340 220 Q380 240 340 280" stroke="url(#iconGradient)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- VV Text -->
+  <text x="256" y="340" font-family="Arial, sans-serif" font-size="256" font-weight="bold" text-anchor="middle" fill="white">VV</text>
 </svg>

@@ -17,7 +17,7 @@ interface TrendingDashboardProps {
   onClose: () => void;
 }
 
-export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
+const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [crownedTrend, setCrownedTrend] = useState<CrownedTrend | null>(null);
   const [userVotes, setUserVotes] = useState<string[]>([]);
@@ -422,4 +422,6 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
       </div>
     </div>
   );
-}
+};
+
+export default TrendingDashboard;

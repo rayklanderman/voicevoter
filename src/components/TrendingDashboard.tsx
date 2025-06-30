@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, TrendingUp, RefreshCw, Vote, Volume2, Loader2, Sparkles, AlertCircle, CheckCircle, Trophy, Zap, Plus } from 'lucide-react';
+import { Crown, TrendingUp, RefreshCw, Vote, Volume2, Loader2, Sparkles, AlertCircle, CheckCircle, Trophy, Plus, X } from 'lucide-react';
 import { 
   generateTrendingTopics, 
   getActiveTrendingTopics, 
@@ -12,7 +12,6 @@ import {
   TRENDING_SOURCES 
 } from '../lib/trendingSystem';
 import { playText, speakWithBrowserTTS, getAudioServiceStatus } from '../lib/elevenLabs';
-import { isTogetherConfigured } from '../lib/together';
 
 interface TrendingDashboardProps {
   onClose: () => void;
@@ -84,7 +83,7 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
         setError(voteError);
       } else {
         setSuccess('Vote cast successfully!');
-        await loadTrendingData(); // Refresh data to show updated vote counts
+        await loadTrendingData();
       }
     } catch (err) {
       console.error('Error voting:', err);
@@ -160,28 +159,28 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden border border-purple-200/50">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden border border-purple-200/50">
         {/* Header */}
-        <div className="p-8 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-orange-50">
-          <div className="flex items-center justify-between mb-6">
+        <div className="p-6 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-orange-50">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center">
                 <Crown className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                   🏆 Trending Topics Leaderboard
                 </h2>
                 <p className="text-purple-600 font-medium">
-                  Vote for the most influential trending topic of the day
+                  Vote for the most influential trending topic
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-3 hover:bg-purple-100 rounded-full transition-colors text-purple-600 text-2xl"
+              className="p-3 hover:bg-purple-100 rounded-full transition-colors text-purple-600 text-xl"
             >
-              ✕
+              <X className="w-6 h-6" />
             </button>
           </div>
 
@@ -217,13 +216,11 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />
                   <span>Generating...</span>
-                  <span className="text-xl animate-pulse">🤖</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-5 h-5" />
                   <span>Generate New Trends</span>
-                  <span className="text-xl">⚡</span>
                 </>
               )}
             </button>
@@ -242,7 +239,6 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
                 <>
                   <Crown className="w-5 h-5" />
                   <span>Crown Daily Winner</span>
-                  <span className="text-xl">👑</span>
                 </>
               )}
             </button>
@@ -254,7 +250,7 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
         </div>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
           {loading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -272,19 +268,18 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
               ))}
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Crowned Trend Section */}
               {crownedTrend && (
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-3xl p-8 relative overflow-hidden">
-                  <div className="absolute top-4 right-4 text-4xl animate-bounce">👑</div>
-                  <div className="absolute bottom-4 left-4 text-2xl animate-pulse">✨</div>
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-3xl p-6 relative overflow-hidden">
+                  <div className="absolute top-4 right-4 text-3xl animate-bounce">👑</div>
                   
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                      <Trophy className="w-8 h-8 text-white" />
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                      <Trophy className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                         🏆 Today's Crowned Trend
                       </h3>
                       <p className="text-orange-700 font-medium">
@@ -295,40 +290,27 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
 
                   {crownedTrend.trending_topic && (
                     <>
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="text-2xl">
-                          {getSourceInfo(crownedTrend.trending_topic.source).emoji}
-                        </span>
-                        <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-bold">
-                          {getSourceInfo(crownedTrend.trending_topic.source).name}
-                        </span>
-                        <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold">
-                          {crownedTrend.trending_topic.category}
-                        </span>
-                      </div>
-
-                      <h4 className="text-xl font-bold text-orange-900 mb-3">
+                      <h4 className="text-lg font-bold text-orange-900 mb-3">
                         {crownedTrend.trending_topic.question_text}
                       </h4>
 
-                      <p className="text-orange-700 mb-6">
+                      <p className="text-orange-700 mb-4">
                         {crownedTrend.trending_topic.context}
                       </p>
 
                       <button
                         onClick={handlePlayCrownedTrend}
                         disabled={playingAudio}
-                        className="flex items-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                        className="flex items-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-6 py-3 rounded-2xl font-bold transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                       >
                         {playingAudio ? (
                           <>
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                            <span>Playing Crown Announcement...</span>
-                            <span className="text-2xl animate-pulse">🔊</span>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>Playing...</span>
                           </>
                         ) : (
                           <>
-                            <Volume2 className="w-6 h-6" />
+                            <Volume2 className="w-5 h-5" />
                             <span>🎙️ Hear Crown Announcement</span>
                           </>
                         )}
@@ -342,7 +324,7 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <TrendingUp className="w-6 h-6 text-purple-600" />
-                  <h3 className="text-2xl font-bold text-purple-900">
+                  <h3 className="text-xl font-bold text-purple-900">
                     🏁 Live Leaderboard - Vote for Most Influential
                   </h3>
                 </div>
@@ -383,17 +365,17 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
                           }`}
                         >
                           {/* Rank Badge */}
-                          <div className={`absolute top-4 left-4 w-12 h-12 bg-gradient-to-r ${rankColor} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                          <div className={`absolute top-4 left-4 w-10 h-10 bg-gradient-to-r ${rankColor} rounded-full flex items-center justify-center text-white font-bold shadow-lg`}>
                             {typeof rankEmoji === 'string' && rankEmoji.includes('#') ? (
                               <span className="text-sm">{rankEmoji}</span>
                             ) : (
-                              <span className="text-xl">{rankEmoji}</span>
+                              <span className="text-lg">{rankEmoji}</span>
                             )}
                           </div>
 
-                          <div className="ml-16 flex items-start justify-between mb-4">
+                          <div className="ml-14 flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">{sourceInfo.emoji}</span>
+                              <span className="text-xl">{sourceInfo.emoji}</span>
                               <div>
                                 <span className={`inline-flex items-center gap-2 bg-gradient-to-r ${sourceInfo.color} text-white px-3 py-1 rounded-full text-sm font-bold`}>
                                   {sourceInfo.name}
@@ -408,9 +390,6 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
                                 <Vote className="w-5 h-5" />
                                 <span>{topic.vote_count}</span>
                               </div>
-                              <div className="text-sm text-purple-600">
-                                Score: {topic.trending_score}/100
-                              </div>
                             </div>
                           </div>
 
@@ -421,17 +400,6 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
                           <p className="text-purple-700 mb-4 text-sm leading-relaxed">
                             {topic.context}
                           </p>
-
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {topic.keywords.map((keyword, i) => (
-                              <span
-                                key={i}
-                                className="bg-gradient-to-r from-purple-100 to-teal-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium"
-                              >
-                                #{keyword}
-                              </span>
-                            ))}
-                          </div>
 
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-purple-600">
@@ -456,35 +424,15 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
                                 <>
                                   <CheckCircle className="w-4 h-4" />
                                   <span>Voted</span>
-                                  <span className="text-lg">✅</span>
                                 </>
                               ) : (
                                 <>
                                   <Vote className="w-4 h-4" />
                                   <span>Vote Most Influential</span>
-                                  <span className="text-lg">🔥</span>
                                 </>
                               )}
                             </button>
                           </div>
-
-                          {/* Vote Progress Bar */}
-                          {trendingTopics.length > 1 && (
-                            <div className="mt-4 pt-4 border-t border-purple-100">
-                              <div className="flex items-center justify-between text-sm text-purple-600 mb-2">
-                                <span>Influence Level</span>
-                                <span>{Math.round((topic.vote_count / Math.max(...trendingTopics.map(t => t.vote_count))) * 100)}%</span>
-                              </div>
-                              <div className="w-full bg-purple-100 rounded-full h-2">
-                                <div 
-                                  className={`h-2 bg-gradient-to-r ${rankColor} rounded-full transition-all duration-500`}
-                                  style={{ 
-                                    width: `${Math.max(5, (topic.vote_count / Math.max(...trendingTopics.map(t => t.vote_count))) * 100)}%` 
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       );
                     })}

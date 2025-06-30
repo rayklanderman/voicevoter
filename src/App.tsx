@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { Vote, LogOut, User, TrendingUp, Zap, Globe, Database, Menu, X, Shield } from 'lucide-react';
+import { Vote, LogOut, User, TrendingUp, Menu, X, Shield } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useQuestion } from './hooks/useQuestion';
 import AuthModal from './components/AuthModal';
 import VotingCard from './components/VotingCard';
 import TopicSelector from './components/TopicSelector';
 import TrendingDashboard from './components/TrendingDashboard';
-import TrendingLeaderboard from './components/TrendingLeaderboard';
 import DatabaseHealthCheck from './components/DatabaseHealthCheck';
-import ScrapingStatus from './components/ScrapingStatus';
-import VoiceTestPanel from './components/VoiceTestPanel';
 import { isTogetherConfigured } from './lib/together';
 import { isElevenLabsConfigured } from './lib/elevenLabs';
 
@@ -37,7 +34,7 @@ function App() {
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-600 border-t-blue-500 mx-auto mb-6"></div>
           </div>
           <p className="text-slate-300 font-semibold text-lg">Loading Voice Voter...</p>
-          <p className="text-slate-400 text-sm mt-2">Preparing your premium voting experience</p>
+          <p className="text-slate-400 text-sm mt-2">Preparing your voting experience</p>
         </div>
       </div>
     );
@@ -55,13 +52,15 @@ function App() {
           <p className="text-sm text-slate-400 mb-6">
             Please check your internet connection and try again.
           </p>
-          <button
-            onClick={() => setShowSystemStatus(!showSystemStatus)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto"
-          >
-            <Shield className="w-5 h-5" />
-            System Diagnostics
-          </button>
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={() => setShowSystemStatus(!showSystemStatus)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto"
+            >
+              <Shield className="w-5 h-5" />
+              System Diagnostics
+            </button>
+          )}
           {showSystemStatus && (
             <div className="mt-6">
               <DatabaseHealthCheck />
@@ -86,38 +85,19 @@ function App() {
               <div>
                 <h1 className="text-xl font-bold text-white">Voice Voter</h1>
                 <p className="text-xs text-slate-400 hidden sm:block">
-                  {hasPremiumFeatures ? '🎙️ Premium Global Voting Platform' : '🗳️ Democratic Voting Platform'}
+                  {hasPremiumFeatures ? '🎙️ Premium Voting Platform' : '🗳️ Democratic Voting Platform'}
                 </p>
               </div>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
-              {/* System Status - Only show for admins/developers */}
-              {process.env.NODE_ENV === 'development' && (
-                <button
-                  onClick={() => setShowSystemStatus(!showSystemStatus)}
-                  className="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors flex items-center gap-2"
-                >
-                  <Database className="w-4 h-4" />
-                  <span className="text-sm">System</span>
-                </button>
-              )}
-
               <button
                 onClick={() => setTrendingDashboardOpen(true)}
                 className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 hover:scale-105 flex items-center gap-2"
               >
-                <Globe className="w-4 h-4" />
-                <span>Global Leaderboard</span>
-              </button>
-
-              <button
-                onClick={() => setTopicSelectorOpen(true)}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 hover:scale-105 flex items-center gap-2"
-              >
                 <TrendingUp className="w-4 h-4" />
-                <span>AI Topics</span>
+                <span>Trending</span>
               </button>
 
               {user ? (
@@ -168,19 +148,8 @@ function App() {
                   }}
                   className="w-full text-left bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
                 >
-                  <Globe className="w-4 h-4" />
-                  <span>Global Leaderboard</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setTopicSelectorOpen(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
-                >
                   <TrendingUp className="w-4 h-4" />
-                  <span>AI Topics</span>
+                  <span>Trending Topics</span>
                 </button>
 
                 {user ? (
@@ -219,60 +188,41 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* System Status Panels - Only in development */}
+        {/* System Status Panel - Only in development */}
         {showSystemStatus && process.env.NODE_ENV === 'development' && (
-          <div className="space-y-6 mb-8">
+          <div className="mb-8">
             <DatabaseHealthCheck />
-            <ScrapingStatus />
-            <VoiceTestPanel />
           </div>
         )}
 
-        {/* Content Layout */}
-        <div className="space-y-8">
-          {/* Voting Section */}
-          <section>
-            {question ? (
-              <VotingCard
-                questionId={question.id}
-                questionText={question.text}
-                questionSource={question.source}
-                createdAt={question.created_at}
-                onAuthRequired={() => setAuthModalOpen(true)}
-                isAuthenticated={!!user}
-              />
-            ) : (
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
-                <div className="text-6xl mb-6">🤔</div>
-                <h2 className="text-2xl font-bold text-white mb-4">No Active Questions</h2>
-                <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
-                  No questions are currently available for voting. Generate some trending topics or AI-powered questions to get started with the global conversation.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => setTrendingDashboardOpen(true)}
-                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-                  >
-                    <Globe className="w-6 h-6" />
-                    <span>View Global Leaderboard</span>
-                  </button>
-                  <button
-                    onClick={() => setTopicSelectorOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3"
-                  >
-                    <Zap className="w-6 h-6" />
-                    <span>Generate AI Topics</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* Trending Leaderboard Section */}
-          <section>
-            <TrendingLeaderboard compact={false} />
-          </section>
-        </div>
+        {/* Voting Section */}
+        <section>
+          {question ? (
+            <VotingCard
+              questionId={question.id}
+              questionText={question.text}
+              questionSource={question.source}
+              createdAt={question.created_at}
+              onAuthRequired={() => setAuthModalOpen(true)}
+              isAuthenticated={!!user}
+            />
+          ) : (
+            <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
+              <div className="text-6xl mb-6">🤔</div>
+              <h2 className="text-2xl font-bold text-white mb-4">No Active Questions</h2>
+              <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
+                No questions are currently available for voting. Check out the trending topics to see what's capturing global attention.
+              </p>
+              <button
+                onClick={() => setTrendingDashboardOpen(true)}
+                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3 mx-auto"
+              >
+                <TrendingUp className="w-6 h-6" />
+                <span>View Trending Topics</span>
+              </button>
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Footer */}

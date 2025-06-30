@@ -25,6 +25,11 @@ export async function generateTrendingTopics(): Promise<TrendingTopic[]> {
     throw new Error('Together AI API key not configured');
   }
 
+  // Validate API key format
+  if (!TOGETHER_API_KEY.startsWith('tgp_')) {
+    throw new Error('Invalid Together AI API key format');
+  }
+
   const prompt = `You are a trending topics analyst with expertise in global social media trends. Generate 8 current trending topics that would make excellent poll questions for a global voting app.
 
 Requirements:
@@ -91,9 +96,29 @@ Only return the JSON array, no other text.`;
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Together AI API error:', response.status, errorText);
-      throw new Error(`Together AI API error: ${response.status} - ${errorText}`);
+      let errorMessage = `Together AI API error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          errorMessage = 'Together AI API key is invalid or expired';
+        } else if (response.status === 429) {
+          errorMessage = 'Together AI rate limit exceeded. Please try again later.';
+        } else if (response.status === 402) {
+          errorMessage = 'Together AI quota exceeded. Please check your account balance.';
+        }
+      } catch (parseError) {
+        errorMessage = `Together AI API error: ${response.status} ${response.statusText}`;
+      }
+      
+      console.error('Together AI API error:', response.status, errorMessage);
+      throw new Error(errorMessage);
     }
 
     const data: TogetherResponse = await response.json();
@@ -145,7 +170,8 @@ Only return the JSON array, no other text.`;
 }
 
 export function isTogetherConfigured(): boolean {
-  return !!(TOGETHER_API_KEY && TOGETHER_API_KEY !== 'your_together_api_key');
+  const apiKey = import.meta.env.VITE_TOGETHER_API_KEY;
+  return !!(apiKey && apiKey !== 'your_together_api_key' && apiKey.startsWith('tgp_'));
 }
 
 // Enhanced fallback trending topics for 2025

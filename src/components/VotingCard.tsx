@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, ThumbsUp, ThumbsDown, Volume2, VolumeX, Loader2, AlertCircle, Info, UserCheck, Users, Globe, Clock, Play } from 'lucide-react';
 import { useVotes } from '../hooks/useVotes';
 import { useAuth } from '../hooks/useAuth';
-import { playText, speakWithBrowserTTS, getAudioServiceStatus } from '../lib/elevenLabs';
+import { playTextWithFallback, getAudioServiceStatus } from '../lib/elevenLabs';
 import { getTrendingContext, TRENDING_SOURCES } from '../lib/trendingTopics';
 
 interface VotingCardProps {
@@ -26,7 +26,7 @@ function VotingCard({
   const { user } = useAuth();
   const [voting, setVoting] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(false);
-  const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioMessage, setAudioMessage] = useState<string | null>(null);
   const [audioService, setAudioService] = useState(getAudioServiceStatus());
 
   useEffect(() => {
@@ -49,12 +49,12 @@ function VotingCard({
 
   const handleReadResults = async () => {
     if (votes.total === 0) {
-      setAudioError('No votes to read yet! Cast the first vote to hear results.');
+      setAudioMessage('No votes to read yet! Cast the first vote to hear results.');
       return;
     }
 
     setPlayingAudio(true);
-    setAudioError(null);
+    setAudioMessage(null);
     
     try {
       const yesPercentage = Math.round((votes.yes / votes.total) * 100);
@@ -74,22 +74,18 @@ function VotingCard({
           noPercentage > yesPercentage ? 'NO is currently winning!' : 
           'It\'s a tie! Every vote counts.'}`;
       
-      try {
-        await playText(resultText);
-      } catch (elevenLabsError) {
-        console.warn('ElevenLabs failed, trying browser TTS:', elevenLabsError);
-        try {
-          await speakWithBrowserTTS(resultText);
-        } catch (browserTTSError) {
-          setAudioError('Unable to play audio. Please check your audio settings and try again.');
-          throw browserTTSError;
-        }
+      // Use the enhanced playback function that tries ElevenLabs first
+      const result = await playTextWithFallback(resultText);
+      
+      if (result.success) {
+        setAudioMessage(`✅ ${result.message}`);
+      } else {
+        setAudioMessage(`❌ ${result.message}`);
       }
       
     } catch (error) {
-      if (!audioError) {
-        setAudioError('Audio playback failed. Please ensure your device audio is working.');
-      }
+      const errorMessage = error instanceof Error ? error.message : 'Audio playback failed';
+      setAudioMessage(`❌ ${errorMessage}`);
     } finally {
       setPlayingAudio(false);
     }
@@ -294,13 +290,17 @@ function VotingCard({
             </div>
           </div>
 
-          {/* Audio Error */}
-          {audioError && (
-            <div className="bg-yellow-500/10 text-yellow-300 p-4 rounded-xl text-sm border border-yellow-500/20 flex items-start gap-3">
+          {/* Audio Message */}
+          {audioMessage && (
+            <div className={`p-4 rounded-xl text-sm border flex items-start gap-3 ${
+              audioMessage.startsWith('✅') 
+                ? 'bg-green-500/10 text-green-300 border-green-500/20' 
+                : 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20'
+            }`}>
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">Audio Notice:</p>
-                <p>{audioError}</p>
+                <p className="font-semibold">Audio Status:</p>
+                <p>{audioMessage}</p>
               </div>
             </div>
           )}
@@ -320,7 +320,7 @@ function VotingCard({
               ) : (
                 <>
                   <Volume2 className="w-6 h-6" />
-                  <span>Read Results Aloud</span>
+                  <span>🎙️ Read Results Aloud</span>
                 </>
               )}
             </button>

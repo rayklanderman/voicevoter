@@ -7,8 +7,15 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
     throw new Error('ElevenLabs API key not configured');
   }
 
-  // Optimize text for speech synthesis
+  // Optimize text for speech synthesis and limit length for free tier
   const optimizedText = optimizeTextForSpeech(text);
+  
+  // Limit text length to conserve free tier tokens (max 2500 chars to be safe)
+  const limitedText = optimizedText.length > 2500 
+    ? optimizedText.substring(0, 2500) + '...' 
+    : optimizedText;
+
+  console.log(`🎙️ ElevenLabs: Synthesizing ${limitedText.length} characters with Rachel voice`);
 
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
     method: 'POST',
@@ -18,7 +25,7 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
       'xi-api-key': ELEVENLABS_API_KEY,
     },
     body: JSON.stringify({
-      text: optimizedText,
+      text: limitedText,
       model_id: 'eleven_turbo_v2_5', // Latest high-quality model
       voice_settings: {
         stability: 0.7,        // Higher stability for clearer speech
@@ -39,6 +46,15 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
       } else if (errorData.message) {
         errorMessage = errorData.message;
       }
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        errorMessage = 'ElevenLabs API key is invalid or expired';
+      } else if (response.status === 429) {
+        errorMessage = 'ElevenLabs rate limit exceeded. Please try again later.';
+      } else if (response.status === 402) {
+        errorMessage = 'ElevenLabs quota exceeded. You may have used your free 10,000 characters.';
+      }
     } catch (parseError) {
       // If we can't parse the error response, use the status text
       errorMessage = `ElevenLabs API error: ${response.status} ${response.statusText}`;
@@ -48,12 +64,13 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
     throw new Error(errorMessage);
   }
 
+  console.log('✅ ElevenLabs: Audio synthesis successful');
   return response.arrayBuffer();
 }
 
 export async function playText(text: string): Promise<void> {
   try {
-    console.log('🎤 Synthesizing speech with ElevenLabs Turbo v2.5...');
+    console.log('🎤 Starting ElevenLabs Turbo v2.5 synthesis...');
     
     const audioBuffer = await synthesizeSpeech(text);
     const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
@@ -168,7 +185,8 @@ function optimizeTextForSpeech(text: string): string {
 
 // Check if ElevenLabs is properly configured
 export function isElevenLabsConfigured(): boolean {
-  return !!(ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your_elevenlabs_api_key');
+  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+  return !!(apiKey && apiKey !== 'your_elevenlabs_api_key' && apiKey.startsWith('sk_'));
 }
 
 // Get audio service status for user feedback
@@ -177,7 +195,7 @@ export function getAudioServiceStatus(): { service: string; available: boolean; 
     return {
       service: 'ElevenLabs Turbo v2.5',
       available: true,
-      message: 'Premium AI voice synthesis with Rachel voice'
+      message: 'Premium AI voice synthesis with Rachel voice (10,000 free characters)'
     };
   } else if ('speechSynthesis' in window) {
     return {
@@ -198,6 +216,7 @@ export function getAudioServiceStatus(): { service: string; available: boolean; 
 export async function playTextWithFallback(text: string): Promise<{ service: string; success: boolean; message: string }> {
   if (isElevenLabsConfigured()) {
     try {
+      console.log('🎙️ Attempting ElevenLabs synthesis...');
       await playText(text);
       return {
         service: 'ElevenLabs',
@@ -210,17 +229,19 @@ export async function playTextWithFallback(text: string): Promise<{ service: str
       // Check if it's an API key/account issue
       const errorMessage = elevenLabsError instanceof Error ? elevenLabsError.message : String(elevenLabsError);
       const isAccountIssue = errorMessage.includes('401') || 
-                            errorMessage.includes('unusual activity') || 
-                            errorMessage.includes('Free Tier usage disabled') ||
-                            errorMessage.includes('insufficient');
+                            errorMessage.includes('invalid') || 
+                            errorMessage.includes('expired') ||
+                            errorMessage.includes('quota exceeded') ||
+                            errorMessage.includes('402');
       
       try {
+        console.log('🔄 Falling back to browser TTS...');
         await speakWithBrowserTTS(text);
         return {
           service: 'Browser TTS',
           success: true,
           message: isAccountIssue 
-            ? 'ElevenLabs account issue detected. Using browser TTS as backup. Please check your ElevenLabs account status.'
+            ? 'ElevenLabs quota/auth issue detected. Using browser TTS as backup. Check your API key or usage limits.'
             : 'ElevenLabs temporarily unavailable. Using browser TTS as backup.'
         };
       } catch (browserError) {
@@ -233,6 +254,7 @@ export async function playTextWithFallback(text: string): Promise<{ service: str
     }
   } else {
     try {
+      console.log('🔊 Using browser TTS (ElevenLabs not configured)...');
       await speakWithBrowserTTS(text);
       return {
         service: 'Browser TTS',

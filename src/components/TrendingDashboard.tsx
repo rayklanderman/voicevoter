@@ -10,7 +10,7 @@ import {
   CrownedTrend,
   TRENDING_SOURCES 
 } from '../lib/trendingSystem';
-import { playText, speakWithBrowserTTS } from '../lib/elevenLabs';
+import { playTextWithFallback } from '../lib/elevenLabs';
 import { automaticTrendingSystem } from '../lib/automaticTrendingSystem';
 
 interface TrendingDashboardProps {
@@ -27,6 +27,7 @@ const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
   const [playingAudio, setPlayingAudio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [audioMessage, setAudioMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadTrendingData();
@@ -119,17 +120,20 @@ const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
 
     setPlayingAudio(true);
     setError(null);
+    setAudioMessage(null);
 
     try {
-      try {
-        await playText(crownedTrend.voice_script);
-      } catch (elevenLabsError) {
-        console.warn('ElevenLabs failed, trying browser TTS:', elevenLabsError);
-        await speakWithBrowserTTS(crownedTrend.voice_script);
+      // Use the enhanced playback function that tries ElevenLabs first
+      const result = await playTextWithFallback(crownedTrend.voice_script);
+      
+      if (result.success) {
+        setAudioMessage(`✅ ${result.message}`);
+      } else {
+        setAudioMessage(`❌ ${result.message}`);
       }
     } catch (err) {
       console.error('Audio playback failed:', err);
-      setError('Failed to play audio');
+      setAudioMessage('❌ Failed to play audio');
     } finally {
       setPlayingAudio(false);
     }
@@ -202,6 +206,20 @@ const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
               <div>
                 <p className="font-semibold">Success!</p>
                 <p>{success}</p>
+              </div>
+            </div>
+          )}
+
+          {audioMessage && (
+            <div className={`mb-4 p-4 rounded-2xl text-sm border flex items-start gap-3 ${
+              audioMessage.startsWith('✅') 
+                ? 'bg-green-50 text-green-700 border-green-200' 
+                : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+            }`}>
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Audio Status:</p>
+                <p>{audioMessage}</p>
               </div>
             </div>
           )}

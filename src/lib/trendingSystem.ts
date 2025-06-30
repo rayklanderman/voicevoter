@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { generateTrendingTopics as generateAITopics, isTogetherConfigured } from './together';
-import { scrapeTrendingTopics, getScrapingStatus, rateLimiter } from './socialScraper';
+import { smartScrapingStrategy, getScrapingStatus, rateLimiter, getNewsAPIUsage } from './socialScraper';
 
 export interface TrendingTopic {
   id: string;
@@ -43,7 +43,7 @@ export const TRENDING_SOURCES = {
   'facebook': { name: 'Facebook', emoji: '📘', color: 'from-blue-600 to-indigo-600' },
   'reddit': { name: 'Reddit', emoji: '🤖', color: 'from-orange-500 to-red-500' },
   'tiktok': { name: 'TikTok', emoji: '🎵', color: 'from-pink-500 to-purple-500' },
-  'news': { name: 'Breaking News', emoji: '📰', color: 'from-gray-600 to-gray-700' },
+  'news': { name: 'NewsAPI', emoji: '📰', color: 'from-gray-600 to-gray-700' },
   'tech': { name: 'Tech Trends', emoji: '💻', color: 'from-green-500 to-teal-500' }
 };
 
@@ -244,30 +244,28 @@ function moderateContent(text: string): boolean {
   return !inappropriateKeywords.some(keyword => lowerText.includes(keyword));
 }
 
-// Enhanced trending topics generation with real scraping
+// Enhanced trending topics generation with optimized NewsAPI usage
 export async function generateTrendingTopics(): Promise<TrendingTopic[]> {
   const sources = ['x_twitter', 'reddit', 'news'];
   const allTopics: TrendingTopic[] = [];
   const scrapingStatus = getScrapingStatus();
+  const newsUsage = getNewsAPIUsage();
 
-  console.log('🚀 Starting enhanced trending topics generation...');
+  console.log('🚀 Starting enhanced trending topics generation with NewsAPI optimization...');
   console.log('📊 Scraping status:', scrapingStatus);
+  console.log(`📰 NewsAPI usage: ${newsUsage.used}/${newsUsage.total} (${newsUsage.remaining} remaining)`);
 
-  for (const source of sources) {
+  // Use smart scraping strategy to optimize NewsAPI usage
+  const scrapedTopics = await smartScrapingStrategy(sources, 20);
+  
+  for (const [source, rawTopics] of Object.entries(scrapedTopics)) {
+    if (rawTopics.length === 0) continue;
+    
     try {
-      // Check rate limiting
-      if (!rateLimiter.canMakeRequest(source, 5, 300000)) { // 5 requests per 5 minutes
-        console.log(`⏰ Rate limit reached for ${source}, skipping...`);
-        continue;
-      }
-
-      console.log(`🔍 Scraping trending topics from ${TRENDING_SOURCES[source as keyof typeof TRENDING_SOURCES]?.name}...`);
-      
-      const rawTopics = await scrapeTrendingTopics(source, 5);
-      console.log(`📝 Raw topics from ${source}:`, rawTopics);
+      console.log(`🤖 Processing ${rawTopics.length} topics from ${source}...`);
       
       const processedTopics = await convertTopicsToPolls(rawTopics, source);
-      console.log(`🤖 Processed ${processedTopics.length} topics from ${source}`);
+      console.log(`✅ Processed ${processedTopics.length} topics from ${source}`);
 
       // Store in database
       for (const topic of processedTopics) {
@@ -308,9 +306,6 @@ export async function generateTrendingTopics(): Promise<TrendingTopic[]> {
 
       // Update last scraped timestamp
       localStorage.setItem(`last_scraped_${source}`, new Date().toISOString());
-
-      // Add delay between sources to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, 2000));
       
     } catch (error) {
       console.error(`❌ Error processing ${source}:`, error);
@@ -318,7 +313,11 @@ export async function generateTrendingTopics(): Promise<TrendingTopic[]> {
     }
   }
 
+  // Log final NewsAPI usage
+  const finalUsage = getNewsAPIUsage();
+  console.log(`📊 Final NewsAPI usage: ${finalUsage.used}/${finalUsage.total} (${finalUsage.remaining} remaining)`);
   console.log(`🎉 Generated ${allTopics.length} trending topics from ${sources.length} sources!`);
+  
   return allTopics;
 }
 
@@ -510,11 +509,12 @@ function getSessionId(): string {
   return sessionId;
 }
 
-// Get scraping statistics
+// Get scraping statistics with NewsAPI usage
 export function getScrapingStats(): {
   totalSources: number;
   configuredSources: number;
   lastScrapedTimes: Record<string, string>;
+  newsAPIUsage: any;
 } {
   const status = getScrapingStatus();
   const configuredCount = Object.values(status).filter(s => s.configured).length;
@@ -529,6 +529,7 @@ export function getScrapingStats(): {
   return {
     totalSources: Object.keys(status).length,
     configuredSources: configuredCount,
-    lastScrapedTimes
+    lastScrapedTimes,
+    newsAPIUsage: getNewsAPIUsage()
   };
 }

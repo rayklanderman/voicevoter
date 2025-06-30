@@ -1,6 +1,6 @@
 // Automatic Trending System - Updates every 3 hours and responds to breaking news
 import { generateTrendingTopics, getActiveTrendingTopics, TrendingTopic } from './trendingSystem';
-import { scrapeTrendingTopics } from './socialScraper';
+import { smartScrapingStrategy, getNewsAPIUsage } from './socialScraper';
 import { supabase } from './supabase';
 
 interface TrendingUpdate {
@@ -22,12 +22,12 @@ class AutomaticTrendingSystem {
   }
 
   private initialize() {
-    console.log('🚀 Initializing Automatic Trending System...');
+    console.log('🚀 Initializing Automatic Trending System with NewsAPI integration...');
     
     // Start the automatic update cycle
     this.startAutomaticUpdates();
     
-    // Start breaking news monitoring
+    // Start breaking news monitoring (optimized for NewsAPI)
     this.startBreakingNewsMonitoring();
     
     // Check if we need an immediate update on startup
@@ -55,12 +55,12 @@ class AutomaticTrendingSystem {
       clearInterval(this.breakingNewsInterval);
     }
 
-    // Check for breaking news every 15 minutes
+    // Check for breaking news every 15 minutes (optimized for NewsAPI quota)
     this.breakingNewsInterval = setInterval(() => {
       this.checkForBreakingNews();
     }, this.BREAKING_NEWS_CHECK);
 
-    console.log('✅ Breaking news monitoring started (every 15 minutes)');
+    console.log('✅ Breaking news monitoring started (every 15 minutes, NewsAPI optimized)');
   }
 
   private async checkForImmediateUpdate() {
@@ -85,16 +85,24 @@ class AutomaticTrendingSystem {
 
   private async checkForBreakingNews() {
     try {
-      console.log('📰 Checking for breaking news...');
+      const newsUsage = getNewsAPIUsage();
       
-      // Scrape latest news headlines
-      const breakingNews = await scrapeTrendingTopics('news', 5);
+      // Only check for breaking news if we have sufficient NewsAPI quota
+      if (newsUsage.remaining < 50) {
+        console.log('📰 Skipping breaking news check - preserving NewsAPI quota');
+        return;
+      }
+
+      console.log('📰 Checking for breaking news with NewsAPI...');
       
-      if (breakingNews.length === 0) return;
+      // Use smart scraping with high priority for breaking news
+      const breakingNews = await smartScrapingStrategy(['news'], 10);
+      
+      if (breakingNews.news && breakingNews.news.length === 0) return;
 
       // Check if any news is significantly different from current topics
       const currentTopics = await getActiveTrendingTopics();
-      const isBreakingNews = await this.detectBreakingNews(breakingNews, currentTopics);
+      const isBreakingNews = await this.detectBreakingNews(breakingNews.news || [], currentTopics);
 
       if (isBreakingNews) {
         console.log('🚨 Breaking news detected! Triggering immediate update...');
@@ -110,12 +118,13 @@ class AutomaticTrendingSystem {
   }
 
   private async detectBreakingNews(newTopics: string[], currentTopics: TrendingTopic[]): Promise<boolean> {
-    // Simple breaking news detection based on keyword urgency
+    // Enhanced breaking news detection with NewsAPI-specific keywords
     const urgentKeywords = [
       'breaking', 'urgent', 'emergency', 'crisis', 'disaster', 'attack', 
       'earthquake', 'hurricane', 'explosion', 'accident', 'death', 'dies',
       'war', 'conflict', 'shooting', 'fire', 'flood', 'storm', 'crash',
-      'resignation', 'elected', 'winner', 'victory', 'defeat', 'scandal'
+      'resignation', 'elected', 'winner', 'victory', 'defeat', 'scandal',
+      'breakthrough', 'discovery', 'first', 'record', 'historic', 'major'
     ];
 
     const currentTopicTexts = currentTopics.map(t => t.raw_topic.toLowerCase());
@@ -155,13 +164,17 @@ class AutomaticTrendingSystem {
     try {
       console.log(`🔄 Starting trending topics update (trigger: ${trigger})...`);
       
+      // Log NewsAPI usage before update
+      const newsUsage = getNewsAPIUsage();
+      console.log(`📊 NewsAPI usage before update: ${newsUsage.used}/${newsUsage.total} (${newsUsage.remaining} remaining)`);
+      
       // Update status to show we're updating
       this.updateSystemStatus({ 
         isUpdating: true,
         breakingNewsDetected: trigger === 'breaking_news'
       });
 
-      // Generate new trending topics
+      // Generate new trending topics with optimized NewsAPI usage
       const newTopics = await generateTrendingTopics();
       
       if (newTopics.length > 0) {
@@ -169,6 +182,10 @@ class AutomaticTrendingSystem {
         await this.cleanupOldTopics();
         
         console.log(`✅ Successfully updated trending topics (${newTopics.length} new topics)`);
+        
+        // Log NewsAPI usage after update
+        const finalUsage = getNewsAPIUsage();
+        console.log(`📊 NewsAPI usage after update: ${finalUsage.used}/${finalUsage.total} (${finalUsage.remaining} remaining)`);
         
         // Update system status
         this.updateSystemStatus({
@@ -271,6 +288,21 @@ class AutomaticTrendingSystem {
     }
   }
 
+  public getNewsAPIStatus(): { usage: any; strategy: string } {
+    const usage = getNewsAPIUsage();
+    const hour = new Date().getHours();
+    const isPeakHours = hour >= 6 && hour <= 22;
+    
+    let strategy = 'Conservative';
+    if (usage.remaining > 200) {
+      strategy = isPeakHours ? 'Aggressive' : 'Moderate';
+    } else if (usage.remaining > 100) {
+      strategy = 'Moderate';
+    }
+    
+    return { usage, strategy };
+  }
+
   public destroy() {
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
@@ -293,5 +325,6 @@ export const automaticTrendingSystem = new AutomaticTrendingSystem();
 export const {
   performTrendingUpdate,
   getSystemStatus,
-  getTimeUntilNextUpdate
+  getTimeUntilNextUpdate,
+  getNewsAPIStatus
 } = automaticTrendingSystem;

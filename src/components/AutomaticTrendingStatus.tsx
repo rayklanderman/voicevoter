@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Zap, Globe, RefreshCw, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
-import { automaticTrendingSystem } from '../lib/automaticTrendingSystem';
+import { Clock, Zap, Globe, RefreshCw, AlertCircle, CheckCircle, TrendingUp, BarChart3 } from 'lucide-react';
+import { automaticTrendingSystem, getNewsAPIStatus } from '../lib/automaticTrendingSystem';
+import { getNewsAPIUsage } from '../lib/socialScraper';
 
 interface TrendingUpdate {
   lastUpdate: string;
@@ -13,12 +14,14 @@ export default function AutomaticTrendingStatus() {
   const [status, setStatus] = useState<TrendingUpdate>(automaticTrendingSystem.getSystemStatus());
   const [timeUntilNext, setTimeUntilNext] = useState<string>('');
   const [recentUpdate, setRecentUpdate] = useState<{ trigger: string; count: number; timestamp: string } | null>(null);
+  const [newsAPIStatus, setNewsAPIStatus] = useState(getNewsAPIStatus());
 
   useEffect(() => {
     // Update status every 30 seconds
     const statusInterval = setInterval(() => {
       setStatus(automaticTrendingSystem.getSystemStatus());
       setTimeUntilNext(automaticTrendingSystem.getTimeUntilNextUpdate());
+      setNewsAPIStatus(getNewsAPIStatus());
     }, 30000);
 
     // Listen for trending topics updates
@@ -72,6 +75,15 @@ export default function AutomaticTrendingStatus() {
     return date.toLocaleDateString();
   };
 
+  const getNewsAPIColor = () => {
+    const { usage } = newsAPIStatus;
+    const percentUsed = (usage.used / usage.total) * 100;
+    
+    if (percentUsed > 80) return 'text-red-400';
+    if (percentUsed > 60) return 'text-yellow-400';
+    return 'text-green-400';
+  };
+
   return (
     <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -82,7 +94,7 @@ export default function AutomaticTrendingStatus() {
           <div>
             <h3 className="text-lg font-bold text-white">🌍 Automatic Trending System</h3>
             <p className="text-sm text-slate-400">
-              Real-time global trend monitoring • Updates every 3 hours
+              Real-time global trend monitoring • Updates every 3 hours • NewsAPI integrated
             </p>
           </div>
         </div>
@@ -107,6 +119,40 @@ export default function AutomaticTrendingStatus() {
           </div>
         </div>
       )}
+
+      {/* NewsAPI Usage Status */}
+      <div className="mb-4 bg-slate-700/30 rounded-lg p-3 border border-slate-600/30">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-slate-400" />
+            <h4 className="font-bold text-slate-300">📰 NewsAPI Usage</h4>
+          </div>
+          <span className={`text-sm font-bold ${getNewsAPIColor()}`}>
+            {newsAPIStatus.usage.used}/{newsAPIStatus.usage.total} requests
+          </span>
+        </div>
+        
+        <div className="flex items-center justify-between text-xs text-slate-400">
+          <span>Strategy: {newsAPIStatus.strategy}</span>
+          <span>{newsAPIStatus.usage.remaining} remaining today</span>
+        </div>
+        
+        {/* Usage Progress Bar */}
+        <div className="mt-2 w-full bg-slate-600/30 rounded-full h-2">
+          <div 
+            className={`h-2 rounded-full transition-all duration-500 ${
+              (newsAPIStatus.usage.used / newsAPIStatus.usage.total) > 0.8 
+                ? 'bg-red-500' 
+                : (newsAPIStatus.usage.used / newsAPIStatus.usage.total) > 0.6 
+                ? 'bg-yellow-500' 
+                : 'bg-green-500'
+            }`}
+            style={{ 
+              width: `${Math.min(100, (newsAPIStatus.usage.used / newsAPIStatus.usage.total) * 100)}%` 
+            }}
+          ></div>
+        </div>
+      </div>
 
       {/* Status Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -141,7 +187,7 @@ export default function AutomaticTrendingStatus() {
           <div className="text-xs text-slate-400 space-y-1">
             <p>✅ Auto-updates every 3 hours</p>
             <p>✅ Breaking news detection</p>
-            <p>✅ Real-time global scraping</p>
+            <p>✅ NewsAPI integration (500/day)</p>
           </div>
         </div>
       </div>
@@ -150,10 +196,10 @@ export default function AutomaticTrendingStatus() {
       <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
         <h4 className="font-bold text-blue-300 mb-2">🤖 How Automatic Updates Work</h4>
         <div className="text-xs text-blue-400 space-y-1">
-          <p>• <strong>Scheduled Updates:</strong> Every 3 hours, scrapes X, Reddit, and news sources</p>
-          <p>• <strong>Breaking News:</strong> Monitors news every 15 minutes for urgent updates</p>
-          <p>• <strong>Smart Cleanup:</strong> Removes old topics with no votes after 24 hours</p>
-          <p>• <strong>Global Sources:</strong> Real trends from trends24.in, Reddit, and news APIs</p>
+          <p>• <strong>Scheduled Updates:</strong> Every 3 hours, scrapes X, Reddit, and NewsAPI</p>
+          <p>• <strong>Breaking News:</strong> Monitors NewsAPI every 15 minutes for urgent updates</p>
+          <p>• <strong>Smart Quota Management:</strong> Optimizes NewsAPI usage (500 requests/day)</p>
+          <p>• <strong>Global Sources:</strong> Real trends from trends24.in, Reddit, and news sources</p>
         </div>
       </div>
     </div>

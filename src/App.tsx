@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import AuthModal from './components/AuthModal';
 import TrendingDashboard from './components/TrendingDashboard';
 import TrendingLeaderboard from './components/TrendingLeaderboard';
+import AutomaticTrendingStatus from './components/AutomaticTrendingStatus';
 import DatabaseHealthCheck from './components/DatabaseHealthCheck';
 import { isTogetherConfigured } from './lib/together';
 import { isElevenLabsConfigured } from './lib/elevenLabs';
@@ -166,10 +167,14 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* System Status Panel - Only in development */}
         {showSystemStatus && process.env.NODE_ENV === 'development' && (
-          <div className="mb-8">
+          <div className="space-y-6 mb-8">
             <DatabaseHealthCheck />
+            <AutomaticTrendingStatus />
           </div>
         )}
+
+        {/* Automatic Trending Status - Always show */}
+        <AutomaticTrendingStatus />
 
         {/* Main Trending Leaderboard - This is the primary feature */}
         <section>

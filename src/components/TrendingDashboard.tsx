@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, TrendingUp, RefreshCw, Vote, Volume2, Loader2, Sparkles, AlertCircle, CheckCircle, Trophy, Plus, X } from 'lucide-react';
+import { Crown, TrendingUp, RefreshCw, Vote, Volume2, Loader2, AlertCircle, CheckCircle, Trophy, X } from 'lucide-react';
 import { 
-  generateTrendingTopics, 
   getActiveTrendingTopics, 
   voteForTrend, 
   getUserTrendVotes,
@@ -11,7 +10,8 @@ import {
   CrownedTrend,
   TRENDING_SOURCES 
 } from '../lib/trendingSystem';
-import { playText, speakWithBrowserTTS, getAudioServiceStatus } from '../lib/elevenLabs';
+import { playText, speakWithBrowserTTS } from '../lib/elevenLabs';
+import { automaticTrendingSystem } from '../lib/automaticTrendingSystem';
 
 interface TrendingDashboardProps {
   onClose: () => void;
@@ -22,7 +22,6 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
   const [crownedTrend, setCrownedTrend] = useState<CrownedTrend | null>(null);
   const [userVotes, setUserVotes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [voting, setVoting] = useState<string | null>(null);
   const [crowning, setCrowning] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(false);
@@ -31,6 +30,17 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
 
   useEffect(() => {
     loadTrendingData();
+    
+    // Listen for automatic updates
+    const handleTrendingUpdate = () => {
+      loadTrendingData();
+    };
+
+    window.addEventListener('trendingTopicsUpdated', handleTrendingUpdate);
+
+    return () => {
+      window.removeEventListener('trendingTopicsUpdated', handleTrendingUpdate);
+    };
   }, []);
 
   const loadTrendingData = async () => {
@@ -52,23 +62,6 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
       setError(err instanceof Error ? err.message : 'Failed to load trending data');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGenerateTopics = async () => {
-    setGenerating(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const newTopics = await generateTrendingTopics();
-      setSuccess(`Generated ${newTopics.length} new trending topics!`);
-      await loadTrendingData();
-    } catch (err) {
-      console.error('Error generating topics:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate trending topics');
-    } finally {
-      setGenerating(false);
     }
   };
 
@@ -169,10 +162,10 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
               </div>
               <div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                  🏆 Trending Topics Leaderboard
+                  🏆 Full Trending Dashboard
                 </h2>
                 <p className="text-purple-600 font-medium">
-                  Vote for the most influential trending topic
+                  Complete trending topics management and crown daily winners
                 </p>
               </div>
             </div>
@@ -205,26 +198,17 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
             </div>
           )}
 
-          {/* Controls */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <button
-              onClick={handleGenerateTopics}
-              disabled={generating}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-6 py-3 rounded-full font-bold transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
-            >
-              {generating ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-5 h-5" />
-                  <span>Generate New Trends</span>
-                </>
-              )}
-            </button>
+          {/* Auto-Update Info */}
+          <div className="bg-blue-50 text-blue-700 p-4 rounded-2xl text-sm border border-blue-200 flex items-center gap-3">
+            <TrendingUp className="w-5 h-5" />
+            <div>
+              <p className="font-semibold">🤖 Automatic System Active</p>
+              <p>Topics update every 3 hours from global sources. Next update: {automaticTrendingSystem.getTimeUntilNextUpdate()}</p>
+            </div>
+          </div>
 
+          {/* Controls */}
+          <div className="flex flex-wrap gap-4 items-center mt-4">
             <button
               onClick={handleCrownTrend}
               disabled={crowning || trendingTopics.length === 0}
@@ -331,18 +315,11 @@ export default function TrendingDashboard({ onClose }: TrendingDashboardProps) {
 
                 {trendingTopics.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🤔</div>
-                    <h4 className="text-2xl font-bold text-purple-900 mb-4">No Trending Topics Yet</h4>
+                    <div className="text-6xl mb-4">🌍</div>
+                    <h4 className="text-2xl font-bold text-purple-900 mb-4">Automatic System Loading...</h4>
                     <p className="text-purple-700 mb-6">
-                      Generate some trending topics to start the voting competition!
+                      The automatic trending system is gathering topics from global sources every 3 hours.
                     </p>
-                    <button
-                      onClick={handleGenerateTopics}
-                      disabled={generating}
-                      className="bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-8 py-4 rounded-2xl font-bold transition-all duration-200 transform hover:scale-105"
-                    >
-                      🚀 Generate Trending Topics
-                    </button>
                   </div>
                 ) : (
                   <div className="space-y-4">

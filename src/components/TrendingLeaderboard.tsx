@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, TrendingUp, Vote, Loader2, Trophy, Zap, RefreshCw, AlertCircle, Plus, Target } from 'lucide-react';
+import { Crown, TrendingUp, Vote, Loader2, Trophy, RefreshCw, AlertCircle, Target, Globe, Zap } from 'lucide-react';
 import { 
   getActiveTrendingTopics, 
   voteForTrend, 
   getUserTrendVotes,
-  generateTrendingTopics,
   TrendingTopic,
   TRENDING_SOURCES 
 } from '../lib/trendingSystem';
+import { automaticTrendingSystem } from '../lib/automaticTrendingSystem';
 
 interface TrendingLeaderboardProps {
   compact?: boolean;
@@ -18,11 +18,24 @@ export default function TrendingLeaderboard({ compact = false }: TrendingLeaderb
   const [userVotes, setUserVotes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
 
   useEffect(() => {
     loadTrendingData();
+    
+    // Listen for automatic updates
+    const handleTrendingUpdate = () => {
+      console.log('🔄 Trending topics updated automatically, refreshing...');
+      loadTrendingData();
+      setLastUpdateTime(new Date().toLocaleTimeString());
+    };
+
+    window.addEventListener('trendingTopicsUpdated', handleTrendingUpdate);
+
+    return () => {
+      window.removeEventListener('trendingTopicsUpdated', handleTrendingUpdate);
+    };
   }, []);
 
   const loadTrendingData = async () => {
@@ -65,18 +78,20 @@ export default function TrendingLeaderboard({ compact = false }: TrendingLeaderb
     }
   };
 
-  const handleGenerateTopics = async () => {
-    setGenerating(true);
-    setError(null);
-
+  const handleManualRefresh = async () => {
     try {
-      await generateTrendingTopics();
+      setLoading(true);
+      setError(null);
+      
+      // Trigger manual update
+      await automaticTrendingSystem.performTrendingUpdate('manual');
       await loadTrendingData();
+      setLastUpdateTime(new Date().toLocaleTimeString());
     } catch (err) {
-      console.error('Error generating topics:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate trending topics');
+      console.error('Error manually refreshing:', err);
+      setError('Failed to refresh trending topics');
     } finally {
-      setGenerating(false);
+      setLoading(false);
     }
   };
 
@@ -103,7 +118,7 @@ export default function TrendingLeaderboard({ compact = false }: TrendingLeaderb
     }
   };
 
-  if (loading) {
+  if (loading && trendingTopics.length === 0) {
     return (
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
         <div className="flex items-center gap-3 mb-6">
@@ -148,27 +163,47 @@ export default function TrendingLeaderboard({ compact = false }: TrendingLeaderb
             </h2>
             <p className="text-slate-400 text-sm font-medium">
               Vote for the most influential trending topics • Real-time global competition
+              {lastUpdateTime && (
+                <span className="ml-2 text-green-400">• Updated at {lastUpdateTime}</span>
+              )}
             </p>
           </div>
         </div>
         
         <button
-          onClick={handleGenerateTopics}
-          disabled={generating}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-purple-600/50 disabled:to-blue-600/50 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
+          onClick={handleManualRefresh}
+          disabled={loading}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-600/50 disabled:to-purple-600/50 text-white px-4 py-2 rounded-xl font-bold transition-all duration-200 hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {generating ? (
+          {loading ? (
             <>
-              <RefreshCw className="w-5 h-5 animate-spin" />
-              <span>Generating...</span>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span className="hidden sm:inline">Updating...</span>
             </>
           ) : (
             <>
-              <Plus className="w-5 h-5" />
-              <span>Generate New Trends</span>
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Refresh</span>
             </>
           )}
         </button>
+      </div>
+
+      {/* Auto-Update Notice */}
+      <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+        <div className="flex items-center gap-3 text-blue-300">
+          <Globe className="w-5 h-5" />
+          <div className="flex-1">
+            <p className="font-medium">🤖 Automatic Global Trending System Active</p>
+            <p className="text-sm text-blue-400 mt-1">
+              Topics auto-update every 3 hours from X, Reddit, and news sources. Breaking news triggers immediate updates.
+            </p>
+          </div>
+          <div className="text-right text-sm">
+            <p className="font-bold">Next update:</p>
+            <p className="text-blue-400">{automaticTrendingSystem.getTimeUntilNextUpdate()}</p>
+          </div>
+        </div>
       </div>
 
       {/* Error Message */}
@@ -183,27 +218,25 @@ export default function TrendingLeaderboard({ compact = false }: TrendingLeaderb
       {trendingTopics.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-6">🌍</div>
-          <h3 className="text-2xl font-bold text-white mb-4">Start the Global Competition</h3>
+          <h3 className="text-2xl font-bold text-white mb-4">Global Trends Loading...</h3>
           <p className="text-slate-300 mb-8 text-lg max-w-2xl mx-auto">
-            Generate trending topics from around the world and vote for the most influential ones. See what's capturing global attention right now!
+            The automatic trending system is gathering the latest global topics from X, Reddit, and news sources. 
+            This happens every 3 hours and responds immediately to breaking news.
           </p>
-          <button
-            onClick={handleGenerateTopics}
-            disabled={generating}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-purple-600/50 disabled:to-blue-600/50 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-3 mx-auto"
-          >
-            {generating ? (
-              <>
-                <RefreshCw className="w-6 h-6 animate-spin" />
-                <span>Generating Global Trends...</span>
-              </>
-            ) : (
-              <>
-                <Zap className="w-6 h-6" />
-                <span>🚀 Generate Global Trending Topics</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center justify-center gap-4 text-slate-400">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              <span>Auto-updates every 3h</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              <span>Global sources</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              <span>Breaking news alerts</span>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

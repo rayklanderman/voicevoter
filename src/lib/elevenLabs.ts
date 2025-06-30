@@ -1,5 +1,6 @@
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
-const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel voice - clear, professional female voice
+// Using Rachel voice - clear, professional female voice optimized for announcements
+const VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
 
 export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
   if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'your_elevenlabs_api_key') {
@@ -18,13 +19,14 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
     },
     body: JSON.stringify({
       text: optimizedText,
-      model_id: 'eleven_monolingual_v1',
+      model_id: 'eleven_turbo_v2_5', // Latest high-quality model
       voice_settings: {
-        stability: 0.6,        // Slightly more stable for clearer speech
-        similarity_boost: 0.7, // Higher similarity for consistent voice
-        style: 0.2,           // Slight style for more engaging delivery
+        stability: 0.7,        // Higher stability for clearer speech
+        similarity_boost: 0.8, // Higher similarity for consistent voice
+        style: 0.3,           // Moderate style for engaging delivery
         use_speaker_boost: true
       },
+      output_format: 'mp3_44100_128' // High quality audio format
     }),
   });
 
@@ -34,6 +36,8 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
       const errorData = await response.json();
       if (errorData.detail?.message) {
         errorMessage = errorData.detail.message;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
       }
     } catch (parseError) {
       // If we can't parse the error response, use the status text
@@ -49,14 +53,14 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
 
 export async function playText(text: string): Promise<void> {
   try {
-    console.log('🎤 Synthesizing speech with ElevenLabs...');
+    console.log('🎤 Synthesizing speech with ElevenLabs Turbo v2.5...');
     
     const audioBuffer = await synthesizeSpeech(text);
     const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
     const audioUrl = URL.createObjectURL(audioBlob);
     
     const audio = new Audio(audioUrl);
-    audio.volume = 0.85; // Optimal volume for clear speech
+    audio.volume = 0.9; // Optimal volume for clear speech
     
     return new Promise((resolve, reject) => {
       audio.onended = () => {
@@ -153,6 +157,10 @@ function optimizeTextForSpeech(text: string): string {
     // Add emphasis to key words
     .replace(/\byes\b/gi, 'YES')
     .replace(/\bno\b/gi, 'NO')
+    // Improve pronunciation of common terms
+    .replace(/\bAI\b/g, 'Artificial Intelligence')
+    .replace(/\bAPI\b/g, 'A P I')
+    .replace(/\bURL\b/g, 'U R L')
     // Clean up extra spaces
     .replace(/\s+/g, ' ')
     .trim();
@@ -167,9 +175,9 @@ export function isElevenLabsConfigured(): boolean {
 export function getAudioServiceStatus(): { service: string; available: boolean; message: string } {
   if (isElevenLabsConfigured()) {
     return {
-      service: 'ElevenLabs',
+      service: 'ElevenLabs Turbo v2.5',
       available: true,
-      message: 'High-quality AI voice synthesis available'
+      message: 'Premium AI voice synthesis with Rachel voice'
     };
   } else if ('speechSynthesis' in window) {
     return {
@@ -194,7 +202,7 @@ export async function playTextWithFallback(text: string): Promise<{ service: str
       return {
         service: 'ElevenLabs',
         success: true,
-        message: 'Premium AI voice synthesis completed successfully'
+        message: 'Premium AI voice synthesis completed successfully with Turbo v2.5 model'
       };
     } catch (elevenLabsError) {
       console.warn('ElevenLabs failed, falling back to browser TTS:', elevenLabsError);
@@ -203,7 +211,8 @@ export async function playTextWithFallback(text: string): Promise<{ service: str
       const errorMessage = elevenLabsError instanceof Error ? elevenLabsError.message : String(elevenLabsError);
       const isAccountIssue = errorMessage.includes('401') || 
                             errorMessage.includes('unusual activity') || 
-                            errorMessage.includes('Free Tier usage disabled');
+                            errorMessage.includes('Free Tier usage disabled') ||
+                            errorMessage.includes('insufficient');
       
       try {
         await speakWithBrowserTTS(text);

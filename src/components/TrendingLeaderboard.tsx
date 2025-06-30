@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, TrendingUp, Vote, Loader2, Trophy, RefreshCw, AlertCircle, Target, Globe, Zap } from 'lucide-react';
+import { Crown, TrendingUp, Vote, Loader2, Trophy, RefreshCw, AlertCircle, Target, Globe, Zap, CheckCircle } from 'lucide-react';
 import { 
   getActiveTrendingTopics, 
   voteForTrend, 
@@ -315,8 +315,8 @@ export default function TrendingLeaderboard({ compact = false }: TrendingLeaderb
                     </>
                   ) : hasVoted ? (
                     <>
-                      <span>Voted</span>
-                      <span className="text-lg">✅</span>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Voted Most Influential</span>
                     </>
                   ) : (
                     <>

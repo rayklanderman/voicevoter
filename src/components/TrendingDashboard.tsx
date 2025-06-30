@@ -426,7 +426,7 @@ const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
                               ) : hasVoted ? (
                                 <>
                                   <CheckCircle className="w-4 h-4" />
-                                  <span>Voted</span>
+                                  <span>Voted Most Influential</span>
                                 </>
                               ) : (
                                 <>

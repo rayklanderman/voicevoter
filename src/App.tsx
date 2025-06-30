@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
 import { Vote, LogOut, User, TrendingUp, Menu, X, Shield } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
-import { useQuestion } from './hooks/useQuestion';
 import AuthModal from './components/AuthModal';
-import VotingCard from './components/VotingCard';
-import TopicSelector from './components/TopicSelector';
 import TrendingDashboard from './components/TrendingDashboard';
+import TrendingLeaderboard from './components/TrendingLeaderboard';
 import DatabaseHealthCheck from './components/DatabaseHealthCheck';
 import { isTogetherConfigured } from './lib/together';
 import { isElevenLabsConfigured } from './lib/elevenLabs';
 
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [topicSelectorOpen, setTopicSelectorOpen] = useState(false);
   const [trendingDashboardOpen, setTrendingDashboardOpen] = useState(false);
   const [showSystemStatus, setShowSystemStatus] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, loading: authLoading, signOut } = useAuth();
-  const { question, loading: questionLoading, error } = useQuestion();
 
   const handleSignOut = async () => {
     await signOut();
@@ -26,7 +22,7 @@ function App() {
   // Check if we have premium features
   const hasPremiumFeatures = isTogetherConfigured() || isElevenLabsConfigured();
 
-  if (authLoading || questionLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50">
@@ -35,37 +31,6 @@ function App() {
           </div>
           <p className="text-slate-300 font-semibold text-lg">Loading Voice Voter...</p>
           <p className="text-slate-400 text-sm mt-2">Preparing your voting experience</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8 max-w-md mx-auto text-center">
-          <div className="text-red-400 mb-6">
-            <Vote className="w-20 h-20 mx-auto" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-4">Connection Issue</h2>
-          <p className="text-slate-300 mb-4">Unable to connect to the database</p>
-          <p className="text-sm text-slate-400 mb-6">
-            Please check your internet connection and try again.
-          </p>
-          {process.env.NODE_ENV === 'development' && (
-            <button
-              onClick={() => setShowSystemStatus(!showSystemStatus)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto"
-            >
-              <Shield className="w-5 h-5" />
-              System Diagnostics
-            </button>
-          )}
-          {showSystemStatus && (
-            <div className="mt-6">
-              <DatabaseHealthCheck />
-            </div>
-          )}
         </div>
       </div>
     );
@@ -85,19 +50,30 @@ function App() {
               <div>
                 <h1 className="text-xl font-bold text-white">Voice Voter</h1>
                 <p className="text-xs text-slate-400 hidden sm:block">
-                  {hasPremiumFeatures ? '🎙️ Premium Voting Platform' : '🗳️ Democratic Voting Platform'}
+                  {hasPremiumFeatures ? '🎙️ Premium Global Voting Platform' : '🗳️ Global Voting Platform'}
                 </p>
               </div>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
+              {/* System Status - Only show for developers */}
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={() => setShowSystemStatus(!showSystemStatus)}
+                  className="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors flex items-center gap-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span className="text-sm">System</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setTrendingDashboardOpen(true)}
                 className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 hover:scale-105 flex items-center gap-2"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Trending</span>
+                <span>Full Dashboard</span>
               </button>
 
               {user ? (
@@ -149,7 +125,7 @@ function App() {
                   className="w-full text-left bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
                 >
                   <TrendingUp className="w-4 h-4" />
-                  <span>Trending Topics</span>
+                  <span>Full Dashboard</span>
                 </button>
 
                 {user ? (
@@ -195,33 +171,9 @@ function App() {
           </div>
         )}
 
-        {/* Voting Section */}
+        {/* Main Trending Leaderboard - This is the primary feature */}
         <section>
-          {question ? (
-            <VotingCard
-              questionId={question.id}
-              questionText={question.text}
-              questionSource={question.source}
-              createdAt={question.created_at}
-              onAuthRequired={() => setAuthModalOpen(true)}
-              isAuthenticated={!!user}
-            />
-          ) : (
-            <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
-              <div className="text-6xl mb-6">🤔</div>
-              <h2 className="text-2xl font-bold text-white mb-4">No Active Questions</h2>
-              <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
-                No questions are currently available for voting. Check out the trending topics to see what's capturing global attention.
-              </p>
-              <button
-                onClick={() => setTrendingDashboardOpen(true)}
-                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-3 mx-auto"
-              >
-                <TrendingUp className="w-6 h-6" />
-                <span>View Trending Topics</span>
-              </button>
-            </div>
-          )}
+          <TrendingLeaderboard compact={false} />
         </section>
       </main>
 
@@ -247,13 +199,6 @@ function App() {
         isOpen={authModalOpen} 
         onClose={() => setAuthModalOpen(false)} 
       />
-      
-      {topicSelectorOpen && (
-        <TopicSelector
-          onTopicSelect={() => {}}
-          onClose={() => setTopicSelectorOpen(false)}
-        />
-      )}
 
       {trendingDashboardOpen && (
         <TrendingDashboard

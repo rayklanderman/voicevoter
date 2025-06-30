@@ -1,0 +1,41 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with rounded corners for iOS -->
+  <rect x="0" y="0" width="180" height="180" rx="40" fill="url(#bgGradient)"/>
+  
+  <!-- Microphone Body -->
+  <rect x="69" y="63" width="42" height="84" rx="21" fill="url(#iconGradient)"/>
+  
+  <!-- Microphone Grille Lines -->
+  <line x1="79" y1="75" x2="101" y2="75" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="85" x2="101" y2="85" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="95" x2="101" y2="95" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="105" x2="101" y2="105" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="115" x2="101" y2="115" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="125" x2="101" y2="125" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="135" x2="101" y2="135" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Microphone Stand -->
+  <rect x="86" y="147" width="8" height="20" fill="url(#iconGradient)"/>
+  
+  <!-- Microphone Base -->
+  <ellipse cx="90" cy="172" rx="20" ry="4" fill="url(#iconGradient)"/>
+  
+  <!-- Vote Checkmark -->
+  <circle cx="120" cy="75" r="15" fill="#10b981"/>
+  <path d="M114 75 L119 80 L126 68" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Sound Waves -->
+  <path d="M120 95 Q130 100 120 105" stroke="url(#iconGradient)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M125 90 Q140 97.5 125 110" stroke="url(#iconGradient)" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

@@ -2,13 +2,116 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Voice Voter" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- SEO Meta Tags -->
     <title>Voice Voter - Vote with Your Voice</title>
     <meta name="description" content="Vote on daily questions and hear the results read aloud with Voice Voter - a modern voting app with text-to-speech integration." />
+    <meta name="keywords" content="voting, voice, polls, democracy, questions, text-to-speech, trending topics" />
+    <meta name="author" content="Voice Voter" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Voice Voter - Vote with Your Voice" />
+    <meta property="og:description" content="Vote on daily questions and hear the results read aloud with Voice Voter - a modern voting app with text-to-speech integration." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512.png" />
+    <meta property="og:url" content="https://voicevoter.app" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Voice Voter - Vote with Your Voice" />
+    <meta name="twitter:description" content="Vote on daily questions and hear the results read aloud with Voice Voter - a modern voting app with text-to-speech integration." />
+    <meta name="twitter:image" content="/icon-512.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://api.supabase.co" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('✅ SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New content is available, prompt user to refresh
+                      if (confirm('New version available! Refresh to update?')) {
+                        window.location.reload();
+                      }
+                    }
+                  });
+                }
+              });
+            })
+            .catch((registrationError) => {
+              console.log('❌ SW registration failed: ', registrationError);
+            });
+        });
+      }
+
+      // PWA Install Prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install button or banner
+        const installBanner = document.createElement('div');
+        installBanner.innerHTML = `
+          <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; display: flex; align-items: center; justify-content: space-between; font-family: system-ui;">
+            <div>
+              <div style="font-weight: bold; margin-bottom: 4px;">📱 Install Voice Voter</div>
+              <div style="font-size: 14px; opacity: 0.9;">Add to home screen for the best experience</div>
+            </div>
+            <div>
+              <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 6px; margin-right: 8px; cursor: pointer;">Later</button>
+              <button id="installBtn" style="background: white; border: none; color: #3b82f6; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">Install</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(installBanner);
+        
+        document.getElementById('installBtn').addEventListener('click', () => {
+          installBanner.remove();
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ User accepted the install prompt');
+            }
+            deferredPrompt = null;
+          });
+        });
+      });
+
+      // Track PWA usage
+      window.addEventListener('appinstalled', () => {
+        console.log('✅ Voice Voter PWA was installed');
+      });
+    </script>
   </body>
 </html>

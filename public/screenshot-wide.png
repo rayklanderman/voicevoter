@@ -1,0 +1,53 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#bgGradient)"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1280" height="80" fill="rgba(30, 41, 59, 0.8)"/>
+  <circle cx="60" cy="40" r="20" fill="url(#cardGradient)"/>
+  <text x="100" y="35" fill="white" font-family="system-ui" font-size="24" font-weight="bold">Voice Voter</text>
+  <text x="100" y="55" fill="#94a3b8" font-family="system-ui" font-size="12">🎙️ Premium Global Voting Platform</text>
+  
+  <!-- Main Content Card -->
+  <rect x="240" y="140" width="800" height="440" rx="24" fill="url(#cardGradient)" stroke="rgba(71, 85, 105, 0.5)" stroke-width="1"/>
+  
+  <!-- Question -->
+  <text x="640" y="200" fill="white" font-family="system-ui" font-size="32" font-weight="bold" text-anchor="middle">Should AI be regulated by governments worldwide?</text>
+  
+  <!-- Vote Buttons -->
+  <rect x="320" y="280" width="200" height="80" rx="12" fill="#10b981"/>
+  <text x="420" y="335" fill="white" font-family="system-ui" font-size="24" font-weight="bold" text-anchor="middle">Yes</text>
+  
+  <rect x="760" y="280" width="200" height="80" rx="12" fill="#ef4444"/>
+  <text x="860" y="335" fill="white" font-family="system-ui" font-size="24" font-weight="bold" text-anchor="middle">No</text>
+  
+  <!-- Results -->
+  <text x="640" y="420" fill="white" font-family="system-ui" font-size="20" font-weight="bold" text-anchor="middle">Live Results</text>
+  <text x="640" y="450" fill="#94a3b8" font-family="system-ui" font-size="16" text-anchor="middle">1,247 votes cast so far</text>
+  
+  <!-- Progress Bars -->
+  <rect x="320" y="480" width="640" height="8" rx="4" fill="#374151"/>
+  <rect x="320" y="480" width="384" height="8" rx="4" fill="#10b981"/>
+  <text x="310" y="475" fill="#10b981" font-family="system-ui" font-size="14" text-anchor="end">Yes 60%</text>
+  
+  <rect x="320" y="510" width="640" height="8" rx="4" fill="#374151"/>
+  <rect x="320" y="510" width="256" height="8" rx="4" fill="#ef4444"/>
+  <text x="310" y="505" fill="#ef4444" font-family="system-ui" font-size="14" text-anchor="end">No 40%</text>
+  
+  <!-- Voice Button -->
+  <rect x="540" y="540" width="200" height="50" rx="25" fill="url(#cardGradient)" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="570" cy="565" r="8" fill="#3b82f6"/>
+  <text x="590" y="570" fill="#3b82f6" font-family="system-ui" font-size="16" font-weight="bold">Read Results Aloud</text>
+</svg>

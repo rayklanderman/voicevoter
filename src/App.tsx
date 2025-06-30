@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Vote, LogOut, User, TrendingUp, Menu, X, Shield } from 'lucide-react';
+import { Vote, LogOut, User, TrendingUp, Menu, X, Shield, Plus } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import AuthModal from './components/AuthModal';
 import TrendingDashboard from './components/TrendingDashboard';
 import TrendingLeaderboard from './components/TrendingLeaderboard';
 import AutomaticTrendingStatus from './components/AutomaticTrendingStatus';
+import CreateTopicModal from './components/CreateTopicModal';
 import DatabaseHealthCheck from './components/DatabaseHealthCheck';
 import { isTogetherConfigured } from './lib/together';
 import { isElevenLabsConfigured } from './lib/elevenLabs';
@@ -12,6 +13,7 @@ import { isElevenLabsConfigured } from './lib/elevenLabs';
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [trendingDashboardOpen, setTrendingDashboardOpen] = useState(false);
+  const [createTopicModalOpen, setCreateTopicModalOpen] = useState(false);
   const [showSystemStatus, setShowSystemStatus] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, loading: authLoading, signOut } = useAuth();
@@ -70,6 +72,14 @@ function App() {
               )}
 
               <button
+                onClick={() => setCreateTopicModalOpen(true)}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 hover:scale-105 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Topic</span>
+              </button>
+
+              <button
                 onClick={() => setTrendingDashboardOpen(true)}
                 className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 hover:scale-105 flex items-center gap-2"
               >
@@ -118,6 +128,17 @@ function App() {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-slate-700/50">
               <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setCreateTopicModalOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Topic</span>
+                </button>
+
                 <button
                   onClick={() => {
                     setTrendingDashboardOpen(true);
@@ -203,6 +224,11 @@ function App() {
       <AuthModal 
         isOpen={authModalOpen} 
         onClose={() => setAuthModalOpen(false)} 
+      />
+
+      <CreateTopicModal
+        isOpen={createTopicModalOpen}
+        onClose={() => setCreateTopicModalOpen(false)}
       />
 
       {trendingDashboardOpen && (

@@ -16,38 +16,81 @@ interface ScrapedTrend {
   source: string;
 }
 
+// List of CORS proxies to try in order
+const CORS_PROXIES = [
+  'https://api.allorigins.win/get?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://cors-anywhere.herokuapp.com/',
+  'https://thingproxy.freeboard.io/fetch/'
+];
+
 // Scrape trending topics from trends24.in
 export async function scrapeTrends24(country: string = 'worldwide'): Promise<ScrapedTrend[]> {
-  try {
-    console.log(`🌍 Scraping X trends from trends24.in for ${country}...`);
+  console.log(`🌍 Scraping X trends from trends24.in for ${country}...`);
+  
+  const targetUrl = `https://trends24.in/${country}/`;
+  
+  // Try each CORS proxy in sequence
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxy = CORS_PROXIES[i];
     
-    // Use a CORS proxy to access trends24.in
-    const proxyUrl = 'https://api.allorigins.win/get?url=';
-    const targetUrl = `https://trends24.in/${country}/`;
-    const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
-    
-    const response = await fetch(fullUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch trends: ${response.status}`);
+    try {
+      console.log(`🔄 Attempting proxy ${i + 1}/${CORS_PROXIES.length}: ${proxy.split('?')[0]}...`);
+      
+      const fullUrl = proxy + encodeURIComponent(targetUrl);
+      
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Cache-Control': 'no-cache'
+        },
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+      
+      if (!response.ok) {
+        console.warn(`⚠️ Proxy ${i + 1} returned status ${response.status}: ${response.statusText}`);
+        continue;
+      }
+      
+      const data = await response.json();
+      const htmlContent = data.contents || data;
+      
+      if (!htmlContent || typeof htmlContent !== 'string') {
+        console.warn(`⚠️ Proxy ${i + 1} returned invalid content format`);
+        continue;
+      }
+      
+      // Parse the HTML to extract trending topics
+      const trends = parseTrends24HTML(htmlContent);
+      
+      if (trends.length > 0) {
+        console.log(`✅ Successfully scraped ${trends.length} trends using proxy ${i + 1}`);
+        return trends;
+      } else {
+        console.warn(`⚠️ Proxy ${i + 1} returned no valid trends`);
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(`⚠️ Proxy ${i + 1} failed: ${errorMessage}`);
+      
+      // If this is the last proxy, we'll fall back to mock data
+      if (i === CORS_PROXIES.length - 1) {
+        console.log('❌ All CORS proxies failed, using enhanced fallback trends...');
+        return getEnhancedFallbackTrends();
+      }
+      
+      // Add a small delay before trying the next proxy
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    
-    const data = await response.json();
-    const htmlContent = data.contents;
-    
-    // Parse the HTML to extract trending topics
-    const trends = parseTrends24HTML(htmlContent);
-    
-    console.log(`✅ Successfully scraped ${trends.length} trends from trends24.in`);
-    return trends;
-    
-  } catch (error) {
-    console.error('❌ Error scraping trends24.in:', error);
-    
-    // Fallback to enhanced mock data with current realistic trends
-    console.log('📝 Using enhanced fallback trends...');
-    return getEnhancedFallbackTrends();
   }
+  
+  // Fallback if all proxies fail
+  console.log('📝 Using enhanced fallback trends...');
+  return getEnhancedFallbackTrends();
 }
 
 // Parse HTML content from trends24.in to extract trends
@@ -171,21 +214,31 @@ function getEnhancedFallbackTrends(): ScrapedTrend[] {
   }));
 }
 
-// Get trending topics from multiple regions
+// Get trending topics from multiple regions with improved error handling
 export async function getGlobalTrends(): Promise<ScrapedTrend[]> {
-  const regions = ['worldwide', 'united-states', 'united-kingdom', 'canada', 'australia'];
+  const regions = ['worldwide', 'united-states'];
   const allTrends: ScrapedTrend[] = [];
   
-  for (const region of regions.slice(0, 2)) { // Limit to 2 regions to avoid rate limits
+  for (const region of regions) {
     try {
+      console.log(`🌐 Fetching trends for ${region}...`);
       const trends = await scrapeTrends24(region);
       allTrends.push(...trends);
       
-      // Add delay between requests
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Add delay between requests to be respectful
+      if (region !== regions[regions.length - 1]) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     } catch (error) {
-      console.warn(`Failed to get trends for ${region}:`, error);
+      console.warn(`⚠️ Failed to get trends for ${region}:`, error);
+      // Continue with other regions even if one fails
     }
+  }
+  
+  // If we got no trends from any region, use fallback
+  if (allTrends.length === 0) {
+    console.log('📝 No trends retrieved from any region, using fallback');
+    return getEnhancedFallbackTrends();
   }
   
   // Remove duplicates and sort by volume
@@ -203,49 +256,24 @@ export async function scrapeXTrendsAlternative(): Promise<ScrapedTrend[]> {
   const endpoints = [
     'https://trends24.in/worldwide/',
     'https://trends24.in/united-states/',
-    'https://getdaytrends.com/worldwide/',
   ];
   
   for (const endpoint of endpoints) {
     try {
       console.log(`🔍 Trying alternative endpoint: ${endpoint}`);
+      const trends = await scrapeTrends24('worldwide');
       
-      // Use different CORS proxies as fallback
-      const proxies = [
-        'https://api.allorigins.win/get?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.codetabs.com/v1/proxy?quest='
-      ];
-      
-      for (const proxy of proxies) {
-        try {
-          const response = await fetch(proxy + encodeURIComponent(endpoint), {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            const trends = parseTrends24HTML(data.contents || data);
-            
-            if (trends.length > 0) {
-              console.log(`✅ Successfully scraped ${trends.length} trends from ${endpoint}`);
-              return trends;
-            }
-          }
-        } catch (proxyError) {
-          console.warn(`Proxy ${proxy} failed:`, proxyError);
-          continue;
-        }
+      if (trends.length > 0) {
+        console.log(`✅ Successfully scraped ${trends.length} trends from alternative method`);
+        return trends;
       }
     } catch (endpointError) {
-      console.warn(`Endpoint ${endpoint} failed:`, endpointError);
+      console.warn(`⚠️ Alternative endpoint ${endpoint} failed:`, endpointError);
       continue;
     }
   }
   
   // If all methods fail, return enhanced fallback
-  console.log('🔄 All scraping methods failed, using enhanced fallback');
+  console.log('🔄 All alternative scraping methods failed, using enhanced fallback');
   return getEnhancedFallbackTrends();
 }

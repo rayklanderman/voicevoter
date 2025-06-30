@@ -95,12 +95,20 @@ const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
       if (crowned) {
         setCrownedTrend(crowned);
         setSuccess('Daily trend has been crowned! 👑');
+        await loadTrendingData(); // Refresh the data
       } else {
-        setError('No trending topics with votes found for today');
+        setError('Failed to crown daily trend');
       }
     } catch (err) {
       console.error('Error crowning trend:', err);
-      setError(err instanceof Error ? err.message : 'Failed to crown daily trend');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to crown daily trend';
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('No active trending topics found')) {
+        setError('No trending topics available. Please wait for the automatic system to generate topics or create some manually.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setCrowning(false);
     }
@@ -211,7 +219,7 @@ const TrendingDashboard: React.FC<TrendingDashboardProps> = ({ onClose }) => {
           <div className="flex flex-wrap gap-4 items-center mt-4">
             <button
               onClick={handleCrownTrend}
-              disabled={crowning || trendingTopics.length === 0}
+              disabled={crowning}
               className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 py-3 rounded-full font-bold transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
             >
               {crowning ? (

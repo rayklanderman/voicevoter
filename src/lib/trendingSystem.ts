@@ -429,36 +429,44 @@ export async function getTodaysCrownedTrend(): Promise<CrownedTrend | null> {
   }
 }
 
-// Crown the daily trend (run this daily)
+// Crown the daily trend (run this daily) - Fixed to allow topics with 0 votes
 export async function crownDailyTrend(): Promise<CrownedTrend | null> {
   try {
-    // Get the top trending topic for today
+    // Get the top trending topic for today (allow 0 votes)
     const { data: topTrend, error: fetchError } = await supabase
       .from('trending_topics')
       .select('*')
       .eq('is_active', true)
       .eq('is_safe', true)
-      .gt('vote_count', 0)
       .order('vote_count', { ascending: false })
       .order('trending_score', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (fetchError || !topTrend) {
-      throw new Error('No trending topics with votes found');
+    if (fetchError) {
+      console.error('Database error fetching trending topics:', fetchError);
+      throw new Error(`Database error: ${fetchError.message}`);
+    }
+
+    if (!topTrend) {
+      throw new Error('No active trending topics found in the database');
     }
 
     // Create enhanced voice script
     const sourceInfo = TRENDING_SOURCES[topTrend.source as keyof typeof TRENDING_SOURCES];
+    const voteText = topTrend.vote_count > 0 
+      ? `This topic received ${topTrend.vote_count} votes from users around the globe, making it the most influential trend of the day.`
+      : `While this topic hasn't received votes yet, it has the highest trending score of ${topTrend.trending_score}, showing its potential for massive global impact.`;
+
     const voiceScript = `🏆 Today's crowned trend comes from ${sourceInfo?.name || 'social media'}! 
     
-    The question that captured the world's attention is: ${topTrend.question_text}
+    The question that captured attention is: ${topTrend.question_text}
     
-    This topic received ${topTrend.vote_count} votes from users around the globe, making it the most influential trend of the day.
+    ${voteText}
     
-    ${topTrend.context || 'This topic sparked intense debate and discussion across social media platforms.'}
+    ${topTrend.context || 'This topic sparked interest and discussion across social media platforms.'}
     
-    The trending score reached ${topTrend.trending_score} out of 100, showing its massive global impact.
+    The trending score reached ${topTrend.trending_score} out of 100, indicating its significance in current global conversations.
     
     Congratulations to this trend for winning today's crown! 👑`;
 
@@ -479,7 +487,7 @@ export async function crownDailyTrend(): Promise<CrownedTrend | null> {
 
     if (error) {
       console.error('Error crowning daily trend:', error);
-      throw error;
+      throw new Error(`Failed to crown trend: ${error.message}`);
     }
 
     return data;

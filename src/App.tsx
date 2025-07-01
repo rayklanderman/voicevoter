@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
-import { Vote, LogOut, User, TrendingUp, Menu, X, Shield, Plus } from 'lucide-react';
-import { useAuth } from './hooks/useAuth';
-import AuthModal from './components/AuthModal';
-import TrendingDashboard from './components/TrendingDashboard';
-import TrendingLeaderboard from './components/TrendingLeaderboard';
-import AutomaticTrendingStatus from './components/AutomaticTrendingStatus';
-import CreateTopicModal from './components/CreateTopicModal';
-import DatabaseHealthCheck from './components/DatabaseHealthCheck';
-import { isTogetherConfigured } from './lib/together';
-import { isElevenLabsConfigured } from './lib/elevenLabs';
+import { useState } from "react";
+import {
+  Vote,
+  LogOut,
+  User,
+  TrendingUp,
+  Menu,
+  X,
+  Shield,
+  Plus,
+} from "lucide-react";
+import { useAuth } from "./hooks/useAuth";
+import AuthModal from "./components/AuthModal";
+import TrendingDashboard from "./components/TrendingDashboard";
+import TrendingLeaderboard from "./components/TrendingLeaderboard";
+import AutomaticTrendingStatus from "./components/AutomaticTrendingStatus";
+import CreateTopicModal from "./components/CreateTopicModal";
+import DatabaseHealthCheck from "./components/DatabaseHealthCheck";
+import APITester from "./components/APITester";
+import { isTogetherConfigured } from "./lib/together";
+import { isElevenLabsConfigured } from "./lib/elevenLabs";
 
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -32,8 +42,12 @@ function App() {
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-600 border-t-blue-500 mx-auto mb-6"></div>
           </div>
-          <p className="text-slate-300 font-semibold text-lg">Loading Voice Voter...</p>
-          <p className="text-slate-400 text-sm mt-2">Preparing your voting experience</p>
+          <p className="text-slate-300 font-semibold text-lg">
+            Loading Voice Voter...
+          </p>
+          <p className="text-slate-400 text-sm mt-2">
+            Preparing your voting experience
+          </p>
         </div>
       </div>
     );
@@ -53,7 +67,9 @@ function App() {
               <div>
                 <h1 className="text-xl font-bold text-white">Voice Voter</h1>
                 <p className="text-xs text-slate-400 hidden sm:block">
-                  {hasPremiumFeatures ? '🎙️ Premium Global Voting Platform' : '🗳️ Global Voting Platform'}
+                  {hasPremiumFeatures
+                    ? "🎙️ Premium Global Voting Platform"
+                    : "🗳️ Global Voting Platform"}
                 </p>
               </div>
             </div>
@@ -61,7 +77,7 @@ function App() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
               {/* System Status - Only show for developers */}
-              {process.env.NODE_ENV === 'development' && (
+              {process.env.NODE_ENV === "development" && (
                 <button
                   onClick={() => setShowSystemStatus(!showSystemStatus)}
                   className="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors flex items-center gap-2"
@@ -94,7 +110,7 @@ function App() {
                       <User className="w-3 h-3 text-white" />
                     </div>
                     <span className="text-sm text-slate-300 hidden lg:inline">
-                      {user.email?.split('@')[0] || 'User'}
+                      {user.email?.split("@")[0] || "User"}
                     </span>
                   </div>
                   <button
@@ -120,7 +136,11 @@ function App() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden text-slate-300 hover:text-white p-2"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
 
@@ -154,7 +174,9 @@ function App() {
                   <div className="pt-2 border-t border-slate-700/50">
                     <div className="flex items-center gap-2 px-3 py-2 text-slate-300">
                       <User className="w-4 h-4" />
-                      <span className="text-sm">{user.email?.split('@')[0] || 'User'}</span>
+                      <span className="text-sm">
+                        {user.email?.split("@")[0] || "User"}
+                      </span>
                     </div>
                     <button
                       onClick={() => {
@@ -187,10 +209,11 @@ function App() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* System Status Panel - Only in development */}
-        {showSystemStatus && process.env.NODE_ENV === 'development' && (
+        {showSystemStatus && process.env.NODE_ENV === "development" && (
           <div className="space-y-6 mb-8">
             <DatabaseHealthCheck />
             <AutomaticTrendingStatus />
+            <APITester />
           </div>
         )}
 
@@ -208,7 +231,21 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-3 bg-slate-800/50 backdrop-blur-xl px-6 py-4 rounded-xl border border-slate-700/50">
             <span className="text-slate-300">Built with</span>
-            <span className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Bolt.new</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+              <img
+                src="/black_circle_360x360.png"
+                alt="Bolt.new Logo"
+                className="w-6 h-6 rounded-full"
+                onError={(e) => {
+                  // Fallback to gradient background if image fails to load
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+              <span className="text-white font-bold text-sm">⚡</span>
+            </div>
+            <span className="font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent text-lg">
+              Bolt.new
+            </span>
             {hasPremiumFeatures && (
               <>
                 <span className="text-slate-300">•</span>
@@ -221,9 +258,9 @@ function App() {
       </footer>
 
       {/* Modals */}
-      <AuthModal 
-        isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)} 
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
       />
 
       <CreateTopicModal
@@ -232,9 +269,7 @@ function App() {
       />
 
       {trendingDashboardOpen && (
-        <TrendingDashboard
-          onClose={() => setTrendingDashboardOpen(false)}
-        />
+        <TrendingDashboard onClose={() => setTrendingDashboardOpen(false)} />
       )}
     </div>
   );

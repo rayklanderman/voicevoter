@@ -93,9 +93,7 @@ export default function TrendingLeaderboard({
 
       const { data: userVoteData } = await userVoteQuery;
       const votedTopicIds =
-        userVoteData?.map(
-          (vote: { trending_topic_id: string }) => vote.trending_topic_id
-        ) || [];
+        userVoteData?.map((vote: { trending_topic_id: string }) => vote.trending_topic_id) || [];
       setUserVotes(votedTopicIds);
     } catch (err) {
       console.error("Error loading trending data:", err);
